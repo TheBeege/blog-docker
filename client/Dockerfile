@@ -2,7 +2,7 @@ FROM centos
 
 ADD client.bash client.bash
 
-ARG server=localhost
+ARG server
 ARG port=8000
 
 ENV server $server
