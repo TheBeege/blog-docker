@@ -6,12 +6,13 @@ services:
     build:
       context: ./server
     ports:
-      - "80:80"
+      - "8000:8000"
 
   client:
     build:
       context: ./client
       args:
         server: 'server'
+        port: 8000
     links:
       - "server"

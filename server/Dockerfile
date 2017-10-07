@@ -2,8 +2,8 @@ FROM centos
 
 RUN yum install -y nmap-ncat
 
-ADD hello.http hello.http
+ADD ./ ./
 
-EXPOSE 80
+EXPOSE 8000
 
-CMD ncat -l localhost 80 < hello.http
+CMD ./server.bash
