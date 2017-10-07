@@ -11,3 +11,7 @@ services:
   client:
     build:
       context: ./client
+      args:
+        server: 'server'
+    links:
+      - "server"

@@ -2,7 +2,7 @@ FROM centos
 
 RUN yum install -y nmap-ncat
 
-ADD hello.http
+ADD hello.http hello.http
 
 EXPOSE 80
 
