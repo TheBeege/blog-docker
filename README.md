@@ -15,7 +15,7 @@ Running Windows? You'll need Windows Professional or higher, since it depends on
 Running on Mac? You've got it easy. Check out Docker for Mac here: https://docs.docker.com/docker-for-mac/install/
 
 Running on Linux? Here's a link for CentOS: https://docs.docker.com/engine/installation/linux/docker-ce/centos/
-There a links for other distributions in the navigation pane on the left.
+There are links for other distributions in the navigation pane on the left.
 
 Double-check to make sure that the `docker` service is started!
 
