@@ -57,6 +57,8 @@ RUN yum install -y nmap-ncat
 
 ADD ./ ./
 
+RUN chmod u+x server.bash
+
 EXPOSE 8000
 
 CMD ./server.bash
@@ -68,7 +70,7 @@ A Dockerfile defines a Docker image. This can be compared to a virtual machine i
 
 `FROM` indicates that we're going to inherit from another Dockerfile. Yes, Docker supports inheritance. It's lovely. Basically, this image will start from the mentioned image, and we'll build on top of it. Where does this other Dockerfile/image come from? Docker Hub! https://hub.docker.com/ In this case, we're going to base our image on CentOS.
 
-`RUN` is simply a way to run a command to help setup the image. In this case, we're installing `ncat` since we'll need it for the demo.
+`RUN` is simply a way to run a command to help setup the image. In this case, we're installing `ncat` since we'll need it for the demo. I added the `chmod` command just in case we didn't have execute permissions or in case we're on Windows.
 
 `ADD` is how you get files from your filesystem into the image. Here, we're just copying everything in our directory to the image's working directory. I'm lazy.
 
@@ -111,7 +113,7 @@ Using the container's ID works, too. If you run `docker ps` again after this, yo
 
 Fancy, huh? Let's get more fancy.
 
-Make a separate folder called client, and drop this bash script in there:
+Make a separate folder called client, and drop this bash script in there. Don't forget to add execute permissions!
 ```
 #!/bin/bash
 # This script should take in 2 arguments: the host to curl and its port
@@ -131,6 +133,8 @@ Now, create a Dockerfile in that folder:
 FROM centos
 
 ADD client.bash client.bash
+
+RUN chmod u+x client.bash
 
 ARG server
 ARG port=8000
