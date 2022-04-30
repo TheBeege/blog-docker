@@ -9,4 +9,4 @@ ADD ./ ./
 
 EXPOSE 8000
 
-CMD ./server.bash
+CMD ["/bin/bash", "./server.bash"]
