@@ -1,4 +1,4 @@
-FROM centos
+FROM centos:7
 
 ADD client.bash client.bash
 
@@ -8,4 +8,4 @@ ARG port=8000
 ENV server $server
 ENV port $port
 
-CMD ./client.bash $server $port
+CMD /bin/bash ./client.bash $server $port
