@@ -158,7 +158,7 @@ You'll notice this file is slightly different.
 
 `ENV` sets environment variables within the container.
 
-In this case, we're taking arguments to the container, making them available to the shell environment, then passing them as inputs to our shell script. This script just makes an HTTP request to the given server at the given port repeatedly with a 1-second delay. Let's see them work together.
+In this case, we're taking arguments to the container, making them available to the shell environment, then passing them as inputs to our shell script. This script just makes an HTTP request to the given server at the given port repeatedly with a 2-second delay. Let's see them work together.
 
 Now, there is a way to get these two containers talking to each other running manually, but that's dumb. It's a lot of effort. There's an easier way.
 
