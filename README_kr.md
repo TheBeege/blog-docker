@@ -18,7 +18,7 @@ Windows를 실행하시나요? 먼저 Linux용 Windows 하위 시스템을 설�
 
 맥을 사용한다면 간단합니다. 맥을 위한 도커는 이곳을 확인하세요: https://docs.docker.com/desktop/install/mac-install/
 
-리눅스를 사용한다면 아래 링크에 CentOS를 위한 내용이 있습니다: https://docs.docker.com/engine/install/ubuntu/
+리눅스를 사용한다면 아래 링크에 Ubuntu를 위한 내용이 있습니다: https://docs.docker.com/engine/install/ubuntu/
 왼쪽 메뉴에 다른 배포판을 위한 링크들도 있습니다.
 
 `도커` 서비스가 시작되었는지 다시 한번 확인해주세요!
@@ -75,7 +75,7 @@ CMD ["./server.sh"]
 
 Dockerfile은 도커 이미지를 정의합니다. 이것은 가상 머신의 이미지와도 비슷합니다. 다시 한번 말씀드리지만, 여러분이 Vagrant에 익숙하다면 Dockerfile은 Vagrant와 매우 비슷합니다.
 
-`FROM`은 다른 도커파일에서 상속받을 것이라는 것을 나타냅니다. 네, 도커는 상속을 지원합니다. 좋죠. 기본적으로 이미지는 위에서 언급한 이미지에서 시작해서, 우리는 그 위에다 빌드하게 됩니다. 이 다른 Dockerfile/이미지는 어디에서 오는 것일까요? 바로 Docker Hub입니다! https://hub.docker.com/ 이 경우에는 CentOS에 이미지를 저장하겠습니다.
+`FROM`은 다른 도커파일에서 상속받을 것이라는 것을 나타냅니다. 네, 도커는 상속을 지원합니다. 좋죠. 기본적으로 이미지는 위에서 언급한 이미지에서 시작해서, 우리는 그 위에다 빌드하게 됩니다. 이 다른 Dockerfile/이미지는 어디에서 오는 것일까요? 바로 Docker Hub입니다! https://hub.docker.com/ 이 경우에는 Alpine에 이미지를 저장하겠습니다.
 
 `RUN`은 이미지 설치를 도와주는 명령어입니다. 이 경우, 우리는 데모에 필요한 `ncat`을 설치합니다.
 

@@ -73,7 +73,7 @@ This is Dockerfile syntax. You can see the full docs here: https://docs.docker.c
 
 A Dockerfile defines a Docker image. This can be compared to a virtual machine image. Again, a Dockerfile is much like a Vagrantfile if you're familiar with Vagrant.
 
-`FROM` indicates that we're going to inherit from another Dockerfile. Yes, Docker supports inheritance. It's lovely. Basically, this image will start from the mentioned image, and we'll build on top of it. Where does this other Dockerfile/image come from? Docker Hub! https://hub.docker.com/ In this case, we're going to base our image on CentOS.
+`FROM` indicates that we're going to inherit from another Dockerfile. Yes, Docker supports inheritance. It's lovely. Basically, this image will start from the mentioned image, and we'll build on top of it. Where does this other Dockerfile/image come from? Docker Hub! https://hub.docker.com/ In this case, we're going to base our image on Alpine.
 
 `RUN` is simply a way to run a command to help setup the image. In this case, we're installing `ncat` since we'll need it for the demo. I added the `chmod` command just in case we didn't have execute permissions or in case we're on Windows.
 
