@@ -1,6 +1,8 @@
-FROM centos:7
+FROM alpine
 
-ADD client.bash client.bash
+RUN apk add --no-cache curl
+
+ADD client.sh client.sh
 
 ARG server
 ARG port=8000
@@ -8,4 +10,4 @@ ARG port=8000
 ENV server $server
 ENV port $port
 
-CMD /bin/bash ./client.bash $server $port
+CMD ["sh", "-c", "./client.sh $server $port"]

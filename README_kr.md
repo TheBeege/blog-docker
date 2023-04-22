@@ -1,20 +1,24 @@
 # 도커로 인프라 자동화하기
 
+이것은 2023-04-22에 업데이트 되었습니다.
+
 **읽어주세요**: 저는 전문가가 아닙니다. 사실 그 반대라고 할 수 있죠. 보통 제가 필요한 걸 할 수 있을 정도로만 배우고 넘어갑니다. 여기에 쓴 내용이 모범 사례라고 생각하지 말아주세요! 그저 기술로 할 수 있는 일들을 드러내기 위해서 썼을 뿐입니다. 저는 항상 공식문서나 튜토리얼을 읽어볼 것을 추천하는데요. 이상적으로는 필요하다면 번역을 해보는 것이 좋습니다.
 
 오늘은 도커를 다뤄볼 건데요. 연습용 서비스를 만들어보고, 도커를 이용해 컨테이너 기반의 소스 제어 인프라에서 서비스 실행을 자동화 할겁니다. 이게 무슨 뜻일까요?
 
 먼저, 이전에 쓰던 방식을 이야기해보겠습니다. 많은 분들이 가상 머신은 익숙하실 겁니다. 원하는대로 OS를 설정하고, 이미지를 만들고, 가상 머신을 호스트하는 하이퍼 바이저를 사용하고, 마음껏 이미지를 배포하는 것이죠. 수년동안 이 방법은 물리적 컴퓨팅 리소스를 다양하게 사용하는 효과적인 방법이었습니다. 하지만 가상화에도 단점이 있습니다. 전체 운영 체제에 리소스 사용량 측면에서 상당한 오버헤드가 있는데요. 부팅하는 시간이 고통스러울 수 있습니다. 가상 디스크 이미지는 크기가 커서 이를 옮기기에도 고통스럽고 만들기도 어렵습니다.(Vagrant를 통해서 완화되긴 했지만 이것도 최근에 개발되었습니다.) 이 방법은 수년동안 효과가 있었습니다. 그렇지만 대안은 없는 걸까요?
 
-도커에 입문해봅시다. 도커는 가상머신 대신에 '컨테이너'라는 것을 사용합니다. 이들은 Linux cgroup (또는 Windows의 Hyper-V)을 사용하여 격리되어 있으면서도 오버헤드가 적은 운영환경을 만들어 줍니다. 컨테이너는 가상머신보다 오버헤드가 현저히 적고, 부팅도 무지 빠릅니다. 도커는 특히 컨테이너 작업을 더 쉽고 즐겁게 할 수 있는 풍부한 도구를 제공합니다. Vagrant와 마찬가지로 컨테이너 구성 방법을 정의하는 Dockerfile이라는 텍스트 파일을 정의할 수 있습니다. Dockerfile들을 읽고 도커 이미지를 만들거나, Dockerhub 또는 Docker registry (git -> Github : Docker -> Dockerhub)에서 이미지를 내려받거나 올리고, 컨테이너를 관리하는 CLI 도구들도 있습니다. 그밖에 도커 컨테이너들을 조정(orchestrate)하는 툴들도 많습니다. '조정(Orchestration)'이 무엇인지는 이 포스팅의 후반부에서 다루겠습니다.
+도커에 입문해봅시다. 도커는 가상머신 대신에 '컨테이너'라는 것을 사용합니다. 이들은 'Linux cgroups'(Mac 및 Windows의 가상 시스템 내부)를 사용해 분리되어 있지만 오버헤드가 적은 운영 환경을 생성합니다.  컨테이너는 가상머신보다 오버헤드가 현저히 적고, 부팅도 무지 빠릅니다. 도커는 특히 컨테이너 작업을 더 쉽고 즐겁게 할 수 있는 풍부한 도구를 제공합니다. Vagrant와 마찬가지로 컨테이너 구성 방법을 정의하는 Dockerfile이라는 텍스트 파일을 정의할 수 있습니다. Dockerfile들을 읽고 도커 이미지를 만들거나, Dockerhub 또는 Docker registry (git -> Github : Docker -> Dockerhub)에서 이미지를 내려받거나 올리고, 컨테이너를 관리하는 CLI 도구들도 있습니다. 그밖에 도커 컨테이너들을 조정(orchestrate)하는 툴들도 많습니다. '조정(Orchestration)'이 무엇인지는 이 포스팅의 후반부에서 다루겠습니다.
 
 좋습니다! 그럼 어떻게 시작하면 좋을까요? 여러분이 갖고있는 머신에 따라 다릅니다.
 
-윈도우를 사용한다면 Hyper-V에 의존하기 때문에 윈도우 Professional 이상의 버전이 필요합니다. 저는 집에서 윈도우를 사용하기 때문에 도커를 돌리기 위해서 CentOS 가상 머신을 설치해야 했습니다. 윈도우를 위한 도커는 이곳을 확인하세요: https://docs.docker.com/docker-for-windows/install/
+Windows를 실행하시나요? 먼저 Linux용 Windows 하위 시스템을 설치해야 한다는 점에 유의하세요 : https://learn.microsoft.com/en-us/windows/wsl/install. 
 
-맥을 사용한다면 간단합니다. 맥을 위한 도커는 이곳을 확인하세요: https://docs.docker.com/docker-for-mac/install/
+설치가 완료되면 여기에서 ' Windows '용 ' Docker '를 확인하세요 : https://docs.docker.com/desktop/install/windows-install/.
 
-리눅스를 사용한다면 아래 링크에 CentOS를 위한 내용이 있습니다: https://docs.docker.com/engine/installation/linux/docker-ce/centos/
+맥을 사용한다면 간단합니다. 맥을 위한 도커는 이곳을 확인하세요: https://docs.docker.com/desktop/install/mac-install/
+
+리눅스를 사용한다면 아래 링크에 CentOS를 위한 내용이 있습니다: https://docs.docker.com/engine/install/ubuntu/
 왼쪽 메뉴에 다른 배포판을 위한 링크들도 있습니다.
 
 `도커` 서비스가 시작되었는지 다시 한번 확인해주세요!
@@ -23,13 +27,18 @@
 
 이제 시작해봅시다. 먼저 _완전_ 간단한 HTTP 서버를 만들어보겠습니다. 새로운 폴더를 만들고 (저는 `server`라고 했습니다), 아래 2개의 파일을 만듭니다.
 
-server.bash:
+server.sh:
 ```
-#!/bin/bash
+#!/bin/sh
+
+trap exit EXIT INT TERM HUP
 
 while true
 do
-  ncat -l $(hostname -I) 8000 < hello.http
+	# `-k`를 사용하는건 어떤가요? `hello.http`는 단 한번만 사용하면 됩니다.
+  # 또한 `wait`가 함정을 잡을 수 있도록 후방으로 보내기도 합니다.
+  ncat -l $(hostname -I) 8000 < hello.http &
+	wait
 done
 ```
 
@@ -46,20 +55,20 @@ HTTP/1.0 200 OK
 
 조잡하긴 하지만 잘 실행됩니다. 이 스크립트는 nmap의 `ncat` 명령을 사용해서 웹서버를 시뮬레이션하기 위해 HTTP 다음에 작성된 텍스트를 실행합니다. `ncat` 은 요청을 실행하고 나서는 요청 받는 것을 멈추기 때문에 이것을 영원히 반복하게 됩니다. 확실하지 않다면, _실제 HTTP 서버를 위해서는 ncat을 사용하지 마세요_. 이것은 다른 툴을 보여주기 위한 하나의 기술 데모일 뿐입니다. 그러니, '올바른 방법의 신'은 나를 용서해주겠죠.
 
-bash 셸을 사용할 수 있다면, 8000 포트에서 HTTP 서버를 실행할 것입니다. 실행이 되는 동안 `localhost:8000`에 접속해서 "Hello, world!"가 적혀있는 간단한 페이지를 확인할 수 있습니다. 우리 예제에서는 이정도면 됩니다.
+POSIX 셸을 사용할 수 있다면, 8000 포트에서 HTTP 서버를 실행할 것입니다. 실행이 되는 동안 `localhost:8000`에 접속해서 "Hello, world!"가 적혀있는 간단한 페이지를 확인할 수 있습니다. 우리 예제에서는 이정도면 됩니다.
 
 이제 컨테이너화해봅시다. 같은 폴더에 Dockerfile 이라는 새로운 파일을 만들어주세요. 확장자명은 없습니다! 아래와 같이 보여야 합니다.
 
 ```
-FROM centos
+FROM alpine
 
-RUN yum install -y nmap-ncat
+RUN apk add --no-cache nmap-ncat
 
 ADD ./ ./
 
 EXPOSE 8000
 
-CMD ./server.bash
+CMD ["./server.sh"]
 ```
 
 이것은 Dockerfile 의 신택스입니다. 전체 문서는 여기서 확인하세요: https://docs.docker.com/engine/reference/builder/
@@ -116,28 +125,32 @@ docker stop suspicious_jackson
 
 멋지죠? 더 멋진 것을 해봅시다.
 
-다른 폴더에 client라는 이름으로 파일을 만들고 아래의 bash 스크립트를 적어주세요.
+다른 폴더에 client라는 이름으로 파일을 만들고 아래의 셸 스크립트를 적어주세요.
 
 ```
-#!/bin/bash
+#!/bin/sh
 # This script should take in 2 arguments: the host to curl and its port
 
 url=$1
 port=$2
 
+trap exit EXIT INT TERM HUP
+
 while true
 do
-  curl $url:$port
-  sleep 1
+  curl -s $url:$port
+  sleep 2
 done
 ```
 
 이제 그 폴더에 Dockerfile을 만들어주세요:
 
 ```
-FROM centos
+FROM alpine
 
-ADD client.bash client.bash
+RUN apk add --no-cache curl
+
+ADD client.sh client.sh
 
 ARG server
 ARG port=8000
@@ -145,7 +158,7 @@ ARG port=8000
 ENV server $server
 ENV port $port
 
-CMD ./client.bash $server $port
+CMD ["sh", "-c", "./client.sh $server $port"]
 ```
 
 이 파일이 아까와는 약간 다르다는 것을 눈치채실 겁니다.
@@ -154,7 +167,7 @@ CMD ./client.bash $server $port
 
 `ENV`는 컨테이너 내의 환경 변수를 설정합니다.
 
-이 경우 우리는 컨테이너에 인자를 받아서 쉘 환경에서 사용할 수 있게 만든 다음, bash 스크립트에 입력값으로 전달합니다. 이 스크립트는 지정된 포트에서 지정된 서버에 1초 간격으로 반복되는 HTTP 요청을 만듭니다. 이 모두가 어떻게 작동하는지 봅시다.
+이 경우 우리는 컨테이너에 인자를 받아서 쉘 환경에서 사용할 수 있게 만든 다음, 셸 스크립트에 입력값으로 전달합니다. 이 스크립트는 지정된 포트에서 지정된 서버에 1초 간격으로 반복되는 HTTP 요청을 만듭니다. 이 모두가 어떻게 작동하는지 봅시다.
 
 이제, 이 두개의 컨테이너가 서로 수동으로 통신하는 방법이 있지만, 그것은 많은 노력이 필요합니다. 더 쉬운 방법이 있습니다.
 

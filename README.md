@@ -1,20 +1,22 @@
 # Automating Infrastructure with Docker
 
+This has been updated as of 2023-04-22.
+
 **Disclaimer**: I am not an expert. I'm quite the opposite. I usually learn just enough to accomplish what I need, and I move on. Do not take what I write here as best practice! This is only intended to expose the potential of technologies. I always recommend reading the official documentation or tutorials, and ideally, translating them if necessary :D
 
 Today, I'd like to tell you about Docker. We're going to create some mock services and automate running them in containerized, source-controlled infrastructure using Docker. What does this mean?
 
 First, a word about a preceding alternative. Most people are familiar with virtual machines: you setup an OS the way you want, create an image of it, use some hypervisor to host virtual machines, and deploy your images at will. For many years, this has been an effective method to diversify the usage of physical compute resources. However, virtualization has its downsides. Entire operating systems have a pretty large amount of overhead in terms of resource usage. Boot times can be painful. Virtual disk images are large, making it a pain to move things around, and they're a pain to create. (This has been mitigated by Vagrant, but that's also a recent development.) This works, and it has worked for many years. However, are there alternatives?
 
-Enter Docker. Docker uses what are called "containers" instead of virtual machines. These utilize Linux cgroups (or Hyper-V on Windows) to create an isolated but low-overhead operating environment. Containers have noticeably less overhead than virtual machines, and startup is wicked fast. Docker specifically provides a wealth of tools to make working with containers easy and even pleasant. Similar to Vagrant, you can define a text file called a Dockerfile that defines how the container is configured. There's a collection of CLI tools for building Docker images from Dockerfiles, pushing and pulling images from Dockerhub or Docker registry (git -> Github : Docker -> Dockerhub), and managing containers. There are also a wealth of tools to orchestrate Docker containers. We'll cover what orchestration is and means later in this post.
+Enter Docker. Docker uses what are called "containers" instead of virtual machines. These utilize Linux cgroups (unfortunately, inside a virtual machine on Mac and Windows) to create an isolated but low-overhead operating environment. Containers have noticeably less overhead than virtual machines, and startup is wicked fast. Docker specifically provides a wealth of tools to make working with containers easy and even pleasant. Similar to Vagrant, you can define a text file called a Dockerfile that defines how the container is configured. There's a collection of CLI tools for building Docker images from Dockerfiles, pushing and pulling images from Dockerhub or Docker registry (git -> Github : Docker -> Dockerhub), and managing containers. There are also a wealth of tools to orchestrate Docker containers. We'll cover what orchestration is and means later in this post.
 
 Sounds great! How do we get started? Well, it depends on your machine.
 
-Running Windows? You'll need Windows Professional or higher, since it depends on Hyper-V. I'm running Windows Home, so I had to setup a CentOS virtual machine to run Docker in. Check out Docker for Windows here: https://docs.docker.com/docker-for-windows/install/
+Running Windows? Heads up that you'll need to install the Windows Subsystem for Linux first: https://learn.microsoft.com/en-us/windows/wsl/install. Once that's done, check out Docker for Windows here: https://docs.docker.com/desktop/install/windows-install/
 
-Running on Mac? You've got it easy. Check out Docker for Mac here: https://docs.docker.com/docker-for-mac/install/
+Running on Mac? You've got it easy. Check out Docker for Mac here: https://docs.docker.com/desktop/install/mac-install/
 
-Running on Linux? Here's a link for CentOS: https://docs.docker.com/engine/installation/linux/docker-ce/centos/
+Running on Linux? Here's a link for Ubuntu: https://docs.docker.com/engine/install/ubuntu/
 There are links for other distributions in the navigation pane on the left.
 
 Double-check to make sure that the `docker` service is started!
@@ -23,13 +25,18 @@ Now that you have things installed, let's build something. Let's build a self-co
 
 Let's get started. First, we're going to build a _super_ simple HTTP server. Create a new folder (I called mine `server`), and create these two files in it.
 
-server.bash:
+server.sh:
 ```
-#!/bin/bash
+#!/bin/sh
+
+trap exit EXIT INT TERM HUP
 
 while true
 do
-  ncat -l $(hostname -I) 8000 < hello.http
+	# Why don't we use -k? hello.http is only piped in once
+	# We also send it to the background so that `wait` can catch the trap
+  ncat -l $(hostname -I) 8000 < hello.http &
+	wait
 done
 ```
 
@@ -46,22 +53,20 @@ HTTP/1.0 200 OK
 
 Sloppy, I know, but it works. This script uses nmap's `ncat` command to serve up some text written out following HTTP to simulate a web server. Since `ncat` stops listening after fulfilling a request, we just loop it forever. If you weren't sure, _don't use ncat for a legitimate HTTP server_. This is just a tech demo for another tool, so I think The Right Way™ gods will forgive me.
 
-If you have a bash shell available, this will run an HTTP server on port 8000. While its running, you can visit `localhost:8000` and see a tiny page with "Hello, world!". This will work for our example.
+If you have a POSIX shell available, this will run an HTTP server on port 8000. While its running, you can visit `localhost:8000` and see a tiny page with "Hello, world!". This will work for our example.
 
 Now, let's containerize it. Create a new file called Dockerfile also in this folder. No extension! It should look like this:
 
 ```
-FROM centos
+FROM alpine
 
-RUN yum install -y nmap-ncat
+RUN apk add --no-cache nmap-ncat
 
 ADD ./ ./
 
-RUN chmod u+x server.bash
-
 EXPOSE 8000
 
-CMD ./server.bash
+CMD ["./server.sh"]
 ```
 
 This is Dockerfile syntax. You can see the full docs here: https://docs.docker.com/engine/reference/builder/
@@ -113,28 +118,30 @@ Using the container's ID works, too. If you run `docker ps` again after this, yo
 
 Fancy, huh? Let's get more fancy.
 
-Make a separate folder called client, and drop this bash script in there. Don't forget to add execute permissions!
+Make a separate folder called client, and drop this shell script in there. Don't forget to add execute permissions!
 ```
-#!/bin/bash
+#!/bin/sh
 # This script should take in 2 arguments: the host to curl and its port
 
 url=$1
 port=$2
 
+trap exit EXIT INT TERM HUP
+
 while true
 do
-  curl $url:$port
-  sleep 1
+  curl -s $url:$port
+  sleep 2
 done
 ```
 
 Now, create a Dockerfile in that folder:
 ```
-FROM centos
+FROM alpine
 
-ADD client.bash client.bash
+RUN apk add --no-cache curl
 
-RUN chmod u+x client.bash
+ADD client.sh client.sh
 
 ARG server
 ARG port=8000
@@ -142,7 +149,7 @@ ARG port=8000
 ENV server $server
 ENV port $port
 
-CMD ./client.bash $server $port
+CMD ["sh", "-c", "./client.sh $server $port"]
 ```
 
 You'll notice this file is slightly different.
@@ -151,7 +158,7 @@ You'll notice this file is slightly different.
 
 `ENV` sets environment variables within the container.
 
-In this case, we're taking arguments to the container, making them available to the shell environment, then passing them as inputs to our bash script. This script just makes an HTTP request to the given server at the given port repeatedly with a 1-second delay. Let's see them work together.
+In this case, we're taking arguments to the container, making them available to the shell environment, then passing them as inputs to our shell script. This script just makes an HTTP request to the given server at the given port repeatedly with a 1-second delay. Let's see them work together.
 
 Now, there is a way to get these two containers talking to each other running manually, but that's dumb. It's a lot of effort. There's an easier way.
 
